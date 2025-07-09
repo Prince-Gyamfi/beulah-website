@@ -15,21 +15,21 @@ class HeroSlider {
 
     // Show first slide
     this.slides[0].classList.add("active")
-    this.dots[0].classList.add("active")
+    if (this.dots[0]) {
+      this.dots[0].classList.add("active")
+    }
 
     // Add click events to dots
     this.dots.forEach((dot, index) => {
       dot.addEventListener("click", () => {
-        if (index !== this.currentSlide) {
+        if (index !== this.currentSlide && !this.isTransitioning) {
           this.showSlide(index)
         }
       })
     })
 
     // Start auto-sliding
-    this.slideInterval = setInterval(() => {
-      this.nextSlide()
-    }, this.autoSlideDelay)
+    this.startAutoSlide()
 
     // Pause on hover
     const slider = document.querySelector(".ul-hero-image-slider")
@@ -37,60 +37,51 @@ class HeroSlider {
       slider.addEventListener("mouseenter", () => this.pauseAutoSlide())
       slider.addEventListener("mouseleave", () => this.startAutoSlide())
     }
-
-    // Add smooth scroll animation for overlay text
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.style.animationDelay = "0.3s"
-          entry.target.style.animation = "slideInUp 0.6s ease-out forwards"
-        }
-      })
-    })
-
-    // Observe all slide overlays
-    document.querySelectorAll(".ul-hero-slide-overlay").forEach((overlay) => {
-      observer.observe(overlay)
-    })
   }
 
   showSlide(index) {
-    if (this.isTransitioning) return
+    if (this.isTransitioning || index === this.currentSlide) return
+
     this.isTransitioning = true
 
-    // Hide all slides
-    this.slides.forEach((slide) => slide.classList.remove("active"))
-    this.dots.forEach((dot) => dot.classList.remove("active"))
+    const currentSlideElement = this.slides[this.currentSlide]
+    const nextSlideElement = this.slides[index]
 
-    // Add fade-out class to current slide
-    this.slides[this.currentSlide].classList.add("fade-out")
+    // Update dots
+    this.dots.forEach((dot) => dot.classList.remove("active"))
+    if (this.dots[index]) {
+      this.dots[index].classList.add("active")
+    }
+
+    // Start transition
+    nextSlideElement.style.opacity = "0"
+    nextSlideElement.classList.add("active")
+
+    // Fade out current slide and fade in next slide
+    currentSlideElement.style.opacity = "0"
 
     setTimeout(() => {
-      // Remove fade-out class and add active class to new slide
-      this.slides[this.currentSlide].classList.remove("fade-out")
-      this.slides[index].classList.add("active", "fade-in")
-      this.dots[index].classList.add("active")
+      nextSlideElement.style.opacity = "1"
+    }, 50)
+
+    setTimeout(() => {
+      currentSlideElement.classList.remove("active")
+      currentSlideElement.style.opacity = ""
+      nextSlideElement.style.opacity = ""
 
       this.currentSlide = index
-
-      setTimeout(() => {
-        this.slides[index].classList.remove("fade-in")
-        this.isTransitioning = false
-      }, 100)
-    }, 400)
+      this.isTransitioning = false
+    }, 800)
   }
 
   nextSlide() {
+    if (this.isTransitioning) return
     const nextIndex = (this.currentSlide + 1) % this.slides.length
     this.showSlide(nextIndex)
   }
 
-  goToSlide(index) {
-    this.showSlide(index)
-    this.restartAutoSlide()
-  }
-
   startAutoSlide() {
+    this.pauseAutoSlide()
     this.slideInterval = setInterval(() => {
       this.nextSlide()
     }, this.autoSlideDelay)
@@ -102,17 +93,7 @@ class HeroSlider {
       this.slideInterval = null
     }
   }
-
-  restartAutoSlide() {
-    this.pauseAutoSlide()
-    this.startAutoSlide()
-  }
 }
-
-// Initialize slider when DOM is loaded
-document.addEventListener("DOMContentLoaded", () => {
-  new HeroSlider()
-})
 
 // Counter animation for stats
 class StatsCounter {
@@ -160,23 +141,8 @@ class StatsCounter {
   }
 }
 
-// Initialize stats counter
+// Initialize when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
+  new HeroSlider()
   new StatsCounter()
 })
-
-// Add CSS animation keyframes
-const style = document.createElement("style")
-style.textContent = `
-    @keyframes slideInUp {
-        from {
-            transform: translateY(30px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-`
-document.head.appendChild(style)
