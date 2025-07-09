@@ -4,7 +4,8 @@ class HeroSlider {
     this.dots = document.querySelectorAll(".ul-hero-dot")
     this.currentSlide = 0
     this.slideInterval = null
-    this.autoSlideDelay = 4000 // 4 seconds
+    this.autoSlideDelay = 5000 // 5 seconds
+    this.isTransitioning = false
 
     this.init()
   }
@@ -13,17 +14,22 @@ class HeroSlider {
     if (this.slides.length === 0) return
 
     // Show first slide
-    this.showSlide(0)
+    this.slides[0].classList.add("active")
+    this.dots[0].classList.add("active")
 
     // Add click events to dots
     this.dots.forEach((dot, index) => {
       dot.addEventListener("click", () => {
-        this.goToSlide(index)
+        if (index !== this.currentSlide) {
+          this.showSlide(index)
+        }
       })
     })
 
     // Start auto-sliding
-    this.startAutoSlide()
+    this.slideInterval = setInterval(() => {
+      this.nextSlide()
+    }, this.autoSlideDelay)
 
     // Pause on hover
     const slider = document.querySelector(".ul-hero-image-slider")
@@ -31,23 +37,47 @@ class HeroSlider {
       slider.addEventListener("mouseenter", () => this.pauseAutoSlide())
       slider.addEventListener("mouseleave", () => this.startAutoSlide())
     }
+
+    // Add smooth scroll animation for overlay text
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationDelay = "0.3s"
+          entry.target.style.animation = "slideInUp 0.6s ease-out forwards"
+        }
+      })
+    })
+
+    // Observe all slide overlays
+    document.querySelectorAll(".ul-hero-slide-overlay").forEach((overlay) => {
+      observer.observe(overlay)
+    })
   }
 
   showSlide(index) {
+    if (this.isTransitioning) return
+    this.isTransitioning = true
+
     // Hide all slides
     this.slides.forEach((slide) => slide.classList.remove("active"))
     this.dots.forEach((dot) => dot.classList.remove("active"))
 
-    // Show current slide
-    if (this.slides[index]) {
-      this.slides[index].classList.add("active")
-    }
+    // Add fade-out class to current slide
+    this.slides[this.currentSlide].classList.add("fade-out")
 
-    if (this.dots[index]) {
+    setTimeout(() => {
+      // Remove fade-out class and add active class to new slide
+      this.slides[this.currentSlide].classList.remove("fade-out")
+      this.slides[index].classList.add("active", "fade-in")
       this.dots[index].classList.add("active")
-    }
 
-    this.currentSlide = index
+      this.currentSlide = index
+
+      setTimeout(() => {
+        this.slides[index].classList.remove("fade-in")
+        this.isTransitioning = false
+      }, 100)
+    }, 400)
   }
 
   nextSlide() {
@@ -134,3 +164,19 @@ class StatsCounter {
 document.addEventListener("DOMContentLoaded", () => {
   new StatsCounter()
 })
+
+// Add CSS animation keyframes
+const style = document.createElement("style")
+style.textContent = `
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+`
+document.head.appendChild(style)
