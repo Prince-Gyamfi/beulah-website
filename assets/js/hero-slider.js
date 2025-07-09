@@ -24,8 +24,6 @@ class HeroSlider {
       dot.addEventListener("click", () => {
         if (index !== this.currentSlide && !this.isTransitioning) {
           this.showSlide(index)
-          this.pauseAutoSlide()
-          this.startAutoSlide()
         }
       })
     })
@@ -143,38 +141,8 @@ class StatsCounter {
   }
 }
 
-// Intersection Observer for scroll animations
-class ScrollAnimation {
-  constructor() {
-    this.init()
-  }
-
-  init() {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.style.animationPlayState = "running"
-        }
-      })
-    }, observerOptions)
-
-    // Observe feature cards
-    const featureCards = document.querySelectorAll(".ul-feature")
-    featureCards.forEach((card) => {
-      card.style.animationPlayState = "paused"
-      observer.observe(card)
-    })
-  }
-}
-
 // Initialize when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
   new HeroSlider()
   new StatsCounter()
-  new ScrollAnimation()
 })
